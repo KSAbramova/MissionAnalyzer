@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .report-header {
+            background: linear-gradient(135deg, #0d6efd, #6610f2);
+            color: white;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: 'Consolas', monospace;
+            font-size: 14.5px;
+            line-height: 1.6;
+            border: 1px solid #dee2e6;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .btn-group .btn {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 th:text="${pageTitle}"></h1>
+
+        <!-- Навигация + выбор типа отчёта -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <a th:href="@{/missions/{id}(id=${mission.missionId})}" class="btn btn-secondary">← Назад к миссии</a>
+                <a href="/missions" class="btn btn-secondary">К списку миссий</a>
+            </div>
+
+            <!-- Выбор типа отчёта (теперь сверху) -->
+            <div class="btn-group" role="group">
+                <a th:href="@{/missions/{id}/report(id=${mission.missionId}, reportType='DEFAULT')}" 
+                   class="btn btn-outline-primary" 
+                   th:classappend="${reportType == 'DEFAULT'} ? 'active' : ''">
+                    Базовый отчёт
+                </a>
+                <a th:href="@{/missions/{id}/report(id=${mission.missionId}, reportType='DETAILED')}" 
+                   class="btn btn-outline-primary" 
+                   th:classappend="${reportType == 'DETAILED'} ? 'active' : ''">
+                    Полный детальный отчёт
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header report-header">
+                <h5>Отчёт: <span th:text="${reportType}"></span></h5>
+            </div>
+            <div class="card-body p-0">
+                <pre th:text="${reportContent}"></pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

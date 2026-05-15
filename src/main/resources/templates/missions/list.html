@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 th:text="${pageTitle}"></h1>
+        
+        <div class="mb-4">
+            <a href="/missions/upload" class="btn btn-primary">Загрузить новую миссию</a>
+        </div>
+
+        <!-- Фильтры -->
+        <form th:action="@{/missions}" method="get" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <select name="outcome" class="form-select">
+                    <option value="">Все исходы</option>
+                    <option value="SUCCESS" th:selected="${selectedOutcome} == 'SUCCESS'">Успех</option>
+                    <option value="PARTIAL_SUCCESS" th:selected="${selectedOutcome} == 'PARTIAL_SUCCESS'">Частичный успех</option>
+                    <option value="FAILURE" th:selected="${selectedOutcome} == 'FAILURE'">Провал</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="location" class="form-control" 
+                       placeholder="Поиск по локации..." 
+                       th:value="${searchLocation}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="startDate" class="form-control" th:value="${startDate}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="endDate" class="form-control" th:value="${endDate}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Применить</button>
+            </div>
+        </form>
+
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Дата</th>
+                    <th>Локация</th>
+                    <th>Исход</th>
+                    <th>Ущерб</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="mission : ${missions}">
+                    <td th:text="${mission.missionId}"></td>
+                    <td th:text="${mission.date} ?: '—'"></td>
+                    <td th:text="${mission.location} ?: '—'"></td>
+                    <td>
+                        <span th:if="${mission.outcome == 'SUCCESS'}" class="badge bg-success">SUCCESS</span>
+                        <span th:if="${mission.outcome == 'PARTIAL_SUCCESS'}" class="badge bg-warning">PARTIAL_SUCCESS</span>
+                        <span th:if="${mission.outcome == 'FAILURE'}" class="badge bg-danger">FAILURE</span>
+                        <span th:if="${mission.outcome == null}" class="badge bg-secondary">—</span>
+                    </td>
+                    <td th:text="${mission.damageCost} != null ? ${mission.damageCost} + ' ED' : '—'"></td>
+                    <td>
+                        <a th:href="@{/missions/{id}(id=${mission.missionId})}" 
+                           class="btn btn-sm btn-info">Просмотр</a>
+                        <button th:onclick="deleteMission([[${mission.missionId}]])" 
+                                class="btn btn-sm btn-danger">Удалить</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p th:if="${missions.isEmpty()}" class="text-muted">Миссии не найдены по заданным фильтрам.</p>
+    </div>
+
+    <script>
+        function deleteMission(id) {
+            if (!confirm('Вы уверены, что хотите удалить миссию ' + id + '?\n\nЭто действие нельзя отменить.')) {
+                return;
+            }
+
+            fetch('/missions/' + id, { 
+                method: 'DELETE',
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Ошибка при удалении. Код: ' + response.status);
+                }
+            })
+            .catch(() => {
+                alert('Ошибка соединения. Страница будет обновлена.');
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
