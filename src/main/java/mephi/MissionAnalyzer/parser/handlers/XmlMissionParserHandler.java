@@ -11,7 +11,7 @@ import java.time.LocalDate;
 public class XmlMissionParserHandler extends BaseMissionParser {
 
     private final MissionDirector director = new MissionDirector();
-    
+
     @Override
     public boolean canHandle(File file) {
         return file.getName().toLowerCase().endsWith(".xml");
@@ -55,13 +55,13 @@ public class XmlMissionParserHandler extends BaseMissionParser {
             case "curse"       -> parseCurse(reader, builder);
             case "sorcerer"    -> parseSorcerer(reader, builder);
             case "technique"   -> parseTechnique(reader, builder);
-            
+
             case "economicAssessment" -> parseEconomicAssessment(reader, builder);
             case "civilianImpact"     -> parseCivilianImpact(reader, builder);
             case "enemyActivity"      -> parseEnemyActivity(reader, builder);
-            case "environment"        -> parseEnvironmentConditions(reader, builder);
-            case "timeline"           -> parseOperationTimeline(reader, builder);
-            
+            case "environment", "environmentConditions" -> parseEnvironmentConditions(reader, builder);
+            case "timeline", "operationTimeline"        -> parseOperationTimeline(reader, builder);
+
             case "operationTags"      -> parseStringList(reader, builder::addOperationTag);
             case "supportUnits"       -> parseStringList(reader, builder::addSupportUnit);
             case "recommendations"    -> parseStringList(reader, builder::addRecommendation);
@@ -138,7 +138,7 @@ public class XmlMissionParserHandler extends BaseMissionParser {
         }
         builder.addTechnique(technique);
     }
-    
+
     private void parseStringList(XMLStreamReader reader, java.util.function.Consumer<String> adder) throws XMLStreamException {
         while (reader.hasNext()) {
             int event = reader.next();
@@ -148,11 +148,116 @@ public class XmlMissionParserHandler extends BaseMissionParser {
             }
         }
     }
-    
-    // заглушки
-    private void parseEconomicAssessment(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {}
-    private void parseCivilianImpact(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {}
-    private void parseEnemyActivity(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {}
-    private void parseEnvironmentConditions(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {}
-    private void parseOperationTimeline(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {}
+
+    private void parseEconomicAssessment(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {
+        EconomicAssessment assessment = new EconomicAssessment();
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.END_ELEMENT && "economicAssessment".equals(reader.getLocalName())) break;
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String subTag = reader.getLocalName();
+                try {
+                    switch (subTag) {
+                        case "totalDamageCost" -> assessment.setTotalDamageCost(Long.parseLong(reader.getElementText().trim()));
+                        case "infrastructureDamage" -> assessment.setInfrastructureDamage(Long.parseLong(reader.getElementText().trim()));
+                        case "commercialDamage" -> assessment.setCommercialDamage(Long.parseLong(reader.getElementText().trim()));
+                        case "transportDamage" -> assessment.setTransportDamage(Long.parseLong(reader.getElementText().trim()));
+                        case "recoveryEstimateDays" -> assessment.setRecoveryEstimateDays(Integer.parseInt(reader.getElementText().trim()));
+                        case "insuranceCovered" -> assessment.setInsuranceCovered(Boolean.parseBoolean(reader.getElementText().trim()));
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        builder.buildEconomicAssessment(assessment);
+    }
+
+    private void parseCivilianImpact(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {
+        CivilianImpact impact = new CivilianImpact();
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.END_ELEMENT && "civilianImpact".equals(reader.getLocalName())) break;
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String subTag = reader.getLocalName();
+                try {
+                    switch (subTag) {
+                        case "evacuated" -> impact.setEvacuated(Integer.parseInt(reader.getElementText().trim()));
+                        case "injured" -> impact.setInjured(Integer.parseInt(reader.getElementText().trim()));
+                        case "missing" -> impact.setMissing(Integer.parseInt(reader.getElementText().trim()));
+                        case "publicExposureRisk" -> impact.setPublicExposureRisk(reader.getElementText());
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        builder.buildCivilianImpact(impact);
+    }
+
+    private void parseEnemyActivity(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {
+        EnemyActivity activity = new EnemyActivity();
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.END_ELEMENT && "enemyActivity".equals(reader.getLocalName())) break;
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String subTag = reader.getLocalName();
+                switch (subTag) {
+                    case "behaviorType" -> activity.setBehaviorType(reader.getElementText());
+                    case "mobility" -> activity.setMobility(reader.getElementText());
+                    case "escalationRisk" -> activity.setEscalationRisk(reader.getElementText());
+                    case "targetPriority" -> parseStringList(reader, activity::addTargetPriority);
+                    case "attackPatterns", "attackPattern" -> parseStringList(reader, activity::addAttackPattern);
+                }
+            }
+        }
+        builder.buildEnemyActivity(activity);
+    }
+
+    private void parseEnvironmentConditions(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {
+        String closingTag = reader.getLocalName();
+        EnvironmentConditions environment = new EnvironmentConditions();
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.END_ELEMENT && closingTag.equals(reader.getLocalName())) break;
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String subTag = reader.getLocalName();
+                try {
+                    switch (subTag) {
+                        case "weather" -> environment.setWeather(reader.getElementText());
+                        case "timeOfDay" -> environment.setTimeOfDay(reader.getElementText());
+                        case "visibility" -> environment.setVisibility(reader.getElementText());
+                        case "cursedEnergyDensity" -> environment.setCursedEnergyDensity(Double.parseDouble(reader.getElementText().trim()));
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        builder.buildEnvironmentConditions(environment);
+    }
+
+    private void parseOperationTimeline(XMLStreamReader reader, ConcreteMissionBuilder builder) throws XMLStreamException {
+        String closingTag = reader.getLocalName();
+        OperationTimeline timeline = new OperationTimeline();
+
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.END_ELEMENT && closingTag.equals(reader.getLocalName())) break;
+
+            if (event == XMLStreamConstants.START_ELEMENT) {
+                String subTag = reader.getLocalName();
+                try {
+                    switch (subTag) {
+                        case "timestamp", "timestamps" -> timeline.setTimestamp(java.time.LocalDateTime.parse(reader.getElementText().trim()));
+                        case "type" -> timeline.setType(reader.getElementText());
+                        case "description" -> timeline.setDescription(reader.getElementText());
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        builder.addOperationTimeline(timeline);
+    }
 }

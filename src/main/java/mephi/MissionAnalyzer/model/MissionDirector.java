@@ -9,6 +9,9 @@ public class MissionDirector {
 
     public Mission constructMission(MissionBuilder builder, Mission source) {
         builder.createNewMission();
+        if (source == null) {
+            return builder.getMission();
+        }
 
         builder.buildMissionId(source.getMissionId());
         builder.buildDate(source.getDate());
@@ -16,7 +19,9 @@ public class MissionDirector {
         builder.buildOutcome(source.getOutcome());
         builder.buildCurse(source.getCurse());
 
-        builder.buildDamageCost(source.getDamageCost());
+        if (source.getDamageCost() != null) {
+            builder.buildDamageCost(source.getDamageCost());
+        }
         builder.buildNote(source.getNote());
 
         builder.buildEconomicAssessment(source.getEconomicAssessment());

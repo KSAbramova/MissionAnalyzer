@@ -6,13 +6,14 @@ import mephi.MissionAnalyzer.parser.MissionParseException;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TxtMissionParserHandler extends BaseMissionParser {
 
     private final MissionDirector director = new MissionDirector();
-    
+
     @Override
     public boolean canHandle(File file) {
         return file.getName().toLowerCase().endsWith(".txt");
@@ -69,18 +70,30 @@ public class TxtMissionParserHandler extends BaseMissionParser {
                 builder.buildCurse(curse);
                 currentObjects.put("CURSE", curse);
             }
-            case "ENVIRONMENT" -> {
+            case "ENVIRONMENT", "ENVIRONMENTCONDITIONS" -> {
                 EnvironmentConditions env = new EnvironmentConditions();
                 builder.buildEnvironmentConditions(env);
                 currentObjects.put("ENVIRONMENT", env);
             }
             case "ECONOMICASSESSMENT", "ECONOMIC" -> {
+                EconomicAssessment assessment = new EconomicAssessment();
+                builder.buildEconomicAssessment(assessment);
+                currentObjects.put("ECONOMIC", assessment);
             }
             case "CIVILIANIMPACT", "CIVILIAN" -> {
+                CivilianImpact impact = new CivilianImpact();
+                builder.buildCivilianImpact(impact);
+                currentObjects.put("CIVILIAN", impact);
             }
             case "ENEMYACTIVITY", "ENEMY" -> {
+                EnemyActivity activity = new EnemyActivity();
+                builder.buildEnemyActivity(activity);
+                currentObjects.put("ENEMY", activity);
             }
             case "TIMELINE" -> {
+                OperationTimeline timeline = new OperationTimeline();
+                builder.addOperationTimeline(timeline);
+                currentObjects.put("TIMELINE", timeline);
             }
         }
     }
@@ -98,13 +111,13 @@ public class TxtMissionParserHandler extends BaseMissionParser {
             case "CURSE"       -> parseCurseSection(key, value, currentObjects);
             case "SORCERER"    -> parseSorcererSection(key, value, currentObjects);
             case "TECHNIQUE"   -> parseTechniqueSection(key, value, currentObjects);
-            case "ENVIRONMENT" -> parseEnvironmentConditionsSection(key, value, currentObjects);
-            
+            case "ENVIRONMENT", "ENVIRONMENTCONDITIONS" -> parseEnvironmentConditionsSection(key, value, currentObjects);
+
             case "ECONOMICASSESSMENT", "ECONOMIC" -> parseEconomicAssessmentSection(key, value, currentObjects);
             case "CIVILIANIMPACT", "CIVILIAN"     -> parseCivilianImpactSection(key, value, currentObjects);
             case "ENEMYACTIVITY", "ENEMY"         -> parseEnemyActivitySection(key, value, currentObjects);
             case "TIMELINE"                       -> parseOperationTimelineSection(key, value, currentObjects);
-            
+
             case "OPERATIONTAGS"   -> parseListSection(key, value, "OPERATIONTAGS", builder);
             case "SUPPORTUNITS"    -> parseListSection(key, value, "SUPPORTUNITS", builder);
             case "RECOMMENDATIONS" -> parseListSection(key, value, "RECOMMENDATIONS", builder);
@@ -176,7 +189,7 @@ public class TxtMissionParserHandler extends BaseMissionParser {
             }
         }
     }
-    
+
     private void parseListSection(String key, String value, String listType, ConcreteMissionBuilder builder) {
         switch (listType) {
             case "OPERATIONTAGS"     -> builder.addOperationTag(value);
@@ -188,9 +201,55 @@ public class TxtMissionParserHandler extends BaseMissionParser {
         }
     }
 
-    // заглушки
-    private void parseEconomicAssessmentSection(String key, String value, Map<String, Object> currentObjects) {}
-    private void parseCivilianImpactSection(String key, String value, Map<String, Object> currentObjects) {}
-    private void parseEnemyActivitySection(String key, String value, Map<String, Object> currentObjects) {}
-    private void parseOperationTimelineSection(String key, String value, Map<String, Object> currentObjects) {}
+    private void parseEconomicAssessmentSection(String key, String value, Map<String, Object> currentObjects) {
+        EconomicAssessment assessment = (EconomicAssessment) currentObjects.get("ECONOMIC");
+        if (assessment == null) return;
+        try {
+            switch (key) {
+                case "totalDamageCost" -> assessment.setTotalDamageCost(Long.parseLong(value));
+                case "infrastructureDamage" -> assessment.setInfrastructureDamage(Long.parseLong(value));
+                case "commercialDamage" -> assessment.setCommercialDamage(Long.parseLong(value));
+                case "transportDamage" -> assessment.setTransportDamage(Long.parseLong(value));
+                case "recoveryEstimateDays" -> assessment.setRecoveryEstimateDays(Integer.parseInt(value));
+                case "insuranceCovered" -> assessment.setInsuranceCovered(Boolean.parseBoolean(value));
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void parseCivilianImpactSection(String key, String value, Map<String, Object> currentObjects) {
+        CivilianImpact impact = (CivilianImpact) currentObjects.get("CIVILIAN");
+        if (impact == null) return;
+        try {
+            switch (key) {
+                case "evacuated" -> impact.setEvacuated(Integer.parseInt(value));
+                case "injured" -> impact.setInjured(Integer.parseInt(value));
+                case "missing" -> impact.setMissing(Integer.parseInt(value));
+                case "publicExposureRisk" -> impact.setPublicExposureRisk(value);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void parseEnemyActivitySection(String key, String value, Map<String, Object> currentObjects) {
+        EnemyActivity activity = (EnemyActivity) currentObjects.get("ENEMY");
+        if (activity == null) return;
+        switch (key) {
+            case "behaviorType" -> activity.setBehaviorType(value);
+            case "mobility" -> activity.setMobility(value);
+            case "escalationRisk" -> activity.setEscalationRisk(value);
+            case "targetPriority" -> activity.addTargetPriority(value);
+            case "attackPatterns", "attackPattern" -> activity.addAttackPattern(value);
+        }
+    }
+
+    private void parseOperationTimelineSection(String key, String value, Map<String, Object> currentObjects) {
+        OperationTimeline timeline = (OperationTimeline) currentObjects.get("TIMELINE");
+        if (timeline == null) return;
+        try {
+            switch (key) {
+                case "timestamp", "timestamps" -> timeline.setTimestamp(LocalDateTime.parse(value));
+                case "type" -> timeline.setType(value);
+                case "description" -> timeline.setDescription(value);
+            }
+        } catch (Exception ignored) {}
+    }
 }

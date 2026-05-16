@@ -23,7 +23,7 @@
                     <tr><th>Дата</th><td th:text="${mission.date} ?: 'Данных нет'"></td></tr>
                     <tr><th>Локация</th><td th:text="${mission.location} ?: 'Данных нет'"></td></tr>
                     <tr><th>Исход</th><td th:text="${mission.outcome} ?: 'Данных нет'"></td></tr>
-                    <tr><th>Ущерб</th><td th:text="${mission.damageCost} != null ? ${mission.damageCost} + ' ED' : 'Данных нет'"></td></tr>
+                    <tr><th>Ущерб</th><td th:text="${mission.damageCost != null ? mission.damageCost + ' ED' : 'Данных нет'}"></td></tr>
                     <tr><th>Примечание</th><td th:text="${mission.note} ?: '—'"></td></tr>
                 </table>
             </div>
@@ -36,6 +36,65 @@
             <div class="card-body">
                 <p><strong>Название:</strong> <span th:text="${mission.curse.name}"></span></p>
                 <p><strong>Уровень угрозы:</strong> <span th:text="${mission.curse.threatLevel}"></span></p>
+            </div>
+        </div>
+
+        <div class="card mb-4" th:if="${mission?.sorcerers != null and !mission.sorcerers.isEmpty()}">
+            <div class="card-header bg-dark text-white">
+                <h5>Маги</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Имя</th>
+                            <th>Ранг</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="sorcerer : ${mission.sorcerers}">
+                            <td th:text="${sorcerer.name} ?: '—'"></td>
+                            <td th:text="${sorcerer.rank} ?: '—'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4" th:if="${mission?.techniques != null and !mission.techniques.isEmpty()}">
+            <div class="card-header bg-secondary text-white">
+                <h5>Техники</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Тип</th>
+                            <th>Владелец</th>
+                            <th>Урон</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="technique : ${mission.techniques}">
+                            <td th:text="${technique.name} ?: '—'"></td>
+                            <td th:text="${technique.type} ?: '—'"></td>
+                            <td th:text="${technique.owner} ?: '—'"></td>
+                            <td th:text="${technique.damage} ?: '—'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4" th:if="${mission?.economicAssessment != null}">
+            <div class="card-header bg-warning">
+                <h5>Экономическая оценка</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Общий ущерб:</strong> <span th:text="${mission.economicAssessment.totalDamageCost}"></span></p>
+                <p><strong>Восстановление, дней:</strong> <span th:text="${mission.economicAssessment.recoveryEstimateDays}"></span></p>
+                <p><strong>Страховка:</strong> <span th:text="${mission.economicAssessment.insuranceCovered}"></span></p>
             </div>
         </div>
         

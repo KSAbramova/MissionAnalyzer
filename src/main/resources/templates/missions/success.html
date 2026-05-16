@@ -11,6 +11,7 @@
             <h4>✅ Успешно!</h4>
             <p th:text="${success}"></p>
         </div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
         <div class="card" th:if="${mission}">
             <div class="card-header">

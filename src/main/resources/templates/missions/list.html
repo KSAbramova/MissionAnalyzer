@@ -8,9 +8,13 @@
 <body>
     <div class="container mt-5">
         <h1 th:text="${pageTitle}"></h1>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
         
         <div class="mb-4">
             <a href="/missions/upload" class="btn btn-primary">Загрузить новую миссию</a>
+            <a href="/missions" class="btn btn-outline-secondary">Сбросить фильтры</a>
         </div>
 
         <!-- Фильтры -->
@@ -18,9 +22,9 @@
             <div class="col-md-3">
                 <select name="outcome" class="form-select">
                     <option value="">Все исходы</option>
-                    <option value="SUCCESS" th:selected="${selectedOutcome} == 'SUCCESS'">Успех</option>
-                    <option value="PARTIAL_SUCCESS" th:selected="${selectedOutcome} == 'PARTIAL_SUCCESS'">Частичный успех</option>
-                    <option value="FAILURE" th:selected="${selectedOutcome} == 'FAILURE'">Провал</option>
+                    <option value="SUCCESS" th:selected="${selectedOutcome == 'SUCCESS'}">Успех</option>
+                    <option value="PARTIAL_SUCCESS" th:selected="${selectedOutcome == 'PARTIAL_SUCCESS'}">Частичный успех</option>
+                    <option value="FAILURE" th:selected="${selectedOutcome == 'FAILURE'}">Провал</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -56,17 +60,20 @@
                     <td th:text="${mission.date} ?: '—'"></td>
                     <td th:text="${mission.location} ?: '—'"></td>
                     <td>
-                        <span th:if="${mission.outcome == 'SUCCESS'}" class="badge bg-success">SUCCESS</span>
-                        <span th:if="${mission.outcome == 'PARTIAL_SUCCESS'}" class="badge bg-warning">PARTIAL_SUCCESS</span>
-                        <span th:if="${mission.outcome == 'FAILURE'}" class="badge bg-danger">FAILURE</span>
+                        <span th:if="${mission.outcome != null and mission.outcome.name() == 'SUCCESS'}" class="badge bg-success">SUCCESS</span>
+                        <span th:if="${mission.outcome != null and mission.outcome.name() == 'PARTIAL_SUCCESS'}" class="badge bg-warning">PARTIAL_SUCCESS</span>
+                        <span th:if="${mission.outcome != null and mission.outcome.name() == 'FAILURE'}" class="badge bg-danger">FAILURE</span>
                         <span th:if="${mission.outcome == null}" class="badge bg-secondary">—</span>
                     </td>
-                    <td th:text="${mission.damageCost} != null ? ${mission.damageCost} + ' ED' : '—'"></td>
+                    <td th:text="${mission.damageCost != null ? mission.damageCost + ' ED' : '—'}"></td>
                     <td>
                         <a th:href="@{/missions/{id}(id=${mission.missionId})}" 
                            class="btn btn-sm btn-info">Просмотр</a>
-                        <button th:onclick="deleteMission([[${mission.missionId}]])" 
-                                class="btn btn-sm btn-danger">Удалить</button>
+                        <form th:action="@{/missions/{id}/delete(id=${mission.missionId})}" method="post" class="d-inline">
+                            <button type="submit"
+                                    onclick="return confirm('Удалить миссию?')"
+                                    class="btn btn-sm btn-danger">Удалить</button>
+                        </form>
                     </td>
                 </tr>
             </tbody>
@@ -74,29 +81,5 @@
 
         <p th:if="${missions.isEmpty()}" class="text-muted">Миссии не найдены по заданным фильтрам.</p>
     </div>
-
-    <script>
-        function deleteMission(id) {
-            if (!confirm('Вы уверены, что хотите удалить миссию ' + id + '?\n\nЭто действие нельзя отменить.')) {
-                return;
-            }
-
-            fetch('/missions/' + id, { 
-                method: 'DELETE',
-                headers: { 'Accept': 'application/json' }
-            })
-            .then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert('Ошибка при удалении. Код: ' + response.status);
-                }
-            })
-            .catch(() => {
-                alert('Ошибка соединения. Страница будет обновлена.');
-                window.location.reload();
-            });
-        }
-    </script>
 </body>
 </html>

@@ -2,17 +2,18 @@ package mephi.MissionAnalyzer.controller;
 
 import model.Mission;
 import mephi.MissionAnalyzer.service.MissionPersistenceService;
+import mephi.MissionAnalyzer.service.MissionProcessingService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
-import mephi.MissionAnalyzer.service.MissionProcessingService;
 
 @Controller
 @RequestMapping("/missions")
@@ -21,7 +22,7 @@ public class MissionWebController {
     private final MissionPersistenceService persistenceService;
     private final MissionProcessingService processingService;
 
-    public MissionWebController(MissionPersistenceService persistenceService, 
+    public MissionWebController(MissionPersistenceService persistenceService,
                                 MissionProcessingService processingService) {
         this.persistenceService = persistenceService;
         this.processingService = processingService;
@@ -74,12 +75,12 @@ public class MissionWebController {
             return "redirect:/missions/upload";
         }
 
+        Path tempFile = null;
         try {
-            Path tempFile = Files.createTempFile("mission_", file.getOriginalFilename());
+            tempFile = createTempFile(file);
             file.transferTo(tempFile.toFile());
 
             Mission savedMission = persistenceService.saveFromFile(tempFile.toFile());
-            Files.deleteIfExists(tempFile);
 
             redirectAttributes.addFlashAttribute("success", "Миссия успешно загружена и сохранена!");
             redirectAttributes.addFlashAttribute("mission", savedMission);
@@ -89,6 +90,8 @@ public class MissionWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Ошибка загрузки: " + e.getMessage());
             return "redirect:/missions/upload";
+        } finally {
+            deleteTempFile(tempFile);
         }
     }
 
@@ -108,9 +111,9 @@ public class MissionWebController {
                 })
                 .orElse("redirect:/missions");
     }
-    
+
     @GetMapping("/{id}/report")
-    public String showReport(@PathVariable String id, 
+    public String showReport(@PathVariable String id,
                              @RequestParam(defaultValue = "DEFAULT") String reportType,
                              Model model) {
 
@@ -127,7 +130,12 @@ public class MissionWebController {
                 })
                 .orElse("redirect:/missions");
     }
-    
+
+    @PostMapping("/{id}/delete")
+    public String deleteMissionFromForm(@PathVariable String id, RedirectAttributes redirectAttributes) {
+        return deleteMission(id, redirectAttributes);
+    }
+
     @DeleteMapping("/{id}")
     public String deleteMission(@PathVariable String id, RedirectAttributes redirectAttributes) {
         boolean deleted = persistenceService.deleteById(id);
@@ -137,5 +145,27 @@ public class MissionWebController {
             redirectAttributes.addFlashAttribute("error", "Миссия не найдена");
         }
         return "redirect:/missions";
+    }
+
+    private Path createTempFile(MultipartFile file) throws IOException {
+        String originalFilename = file.getOriginalFilename();
+        String suffix = ".tmp";
+        if (originalFilename != null) {
+            int dotIndex = originalFilename.lastIndexOf('.');
+            if (dotIndex >= 0) {
+                suffix = originalFilename.substring(dotIndex);
+            }
+        }
+        return Files.createTempFile("mission_", suffix);
+    }
+
+    private void deleteTempFile(Path tempFile) {
+        if (tempFile == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(tempFile);
+        } catch (IOException ignored) {
+        }
     }
 }

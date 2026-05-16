@@ -41,12 +41,12 @@
             <div class="btn-group" role="group">
                 <a th:href="@{/missions/{id}/report(id=${mission.missionId}, reportType='DEFAULT')}" 
                    class="btn btn-outline-primary" 
-                   th:classappend="${reportType == 'DEFAULT'} ? 'active' : ''">
+                   th:classappend="${reportType == 'DEFAULT' ? 'active' : ''}">
                     Базовый отчёт
                 </a>
                 <a th:href="@{/missions/{id}/report(id=${mission.missionId}, reportType='DETAILED')}" 
                    class="btn btn-outline-primary" 
-                   th:classappend="${reportType == 'DETAILED'} ? 'active' : ''">
+                   th:classappend="${reportType == 'DETAILED' ? 'active' : ''}">
                     Полный детальный отчёт
                 </a>
             </div>

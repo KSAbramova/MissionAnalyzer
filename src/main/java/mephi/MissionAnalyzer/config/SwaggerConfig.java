@@ -14,11 +14,10 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Mission Archive API")
-                        .description("API для работы с архивом магических миссий")
+                        .description("API для загрузки, просмотра, удаления и формирования отчетов по миссиям")
                         .version("1.0")
                         .contact(new Contact()
-                                .name("Ваше Имя")
-                                .email("your.email@example.com")
+                                .name("Абрамова Ксения Сергеевна")
                         )
                 );
     }
